@@ -1,0 +1,65 @@
+{% extends 'app/base.html' %}
+
+{% block head %}
+  <style>
+      #svg_contianer {
+          display: flex;
+          justify-content: center;
+      }
+  </style>
+
+  <script>
+      function rerender() {
+          let data = $('.customization').map(function () {
+              return $(this).val();
+          }).get();
+
+          console.log(data);
+
+          $.get("{% url 'render' template.id %}", {data: data}, function (data) {
+              $('#svg_contianer').html(data);
+          })
+      }
+
+      $(document).ready(function () {
+              $('.customization').on('change', rerender)
+              rerender()
+          }
+      )
+  </script>
+{% endblock %}
+
+{% block content %}
+  <div class="row">
+    <div class="col-12 col-md-6">
+      <div class="card">
+        <div class="card-body">
+          <div id="svg_contianer">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-md-6">
+      <div class="card">
+        <div class="card-body">
+          <h2 class="text-center">Customize {{ template.name }}</h2>
+
+          {% for i in template.slot_iterator %}
+            <hr/>
+            <div class="mb-3">
+              <h6><label for="slot-{{ forloop.counter }}">Line {{ forloop.counter }}</label></h6>
+              <input
+                      type="text"
+                      class="form-control customization"
+                      name="slot-{{ forloop.counter }}"
+                      id="slot-{{ forloop.counter }}"
+                      value="Line {{ forloop.counter }}"
+              >
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

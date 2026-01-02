@@ -1,0 +1,41 @@
+{% extends 'app/base.html' %}
+
+{% block head %}
+  <style>
+      .svg-wrapper svg {
+          max-height: 100px;
+          height: auto;
+          width: auto;
+          display: block;
+      }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <div class="row">
+    <div class="col-12 col-md-6 offset-md-3">
+      <div class="card">
+        <div class="card-body">
+          <h2 class="card-title">Choose a File to Customize</h2>
+
+          <table class="table table-hover">
+            {% for tmpl in templates %}
+              <tr>
+                <td style="height: 100px;">
+                  <div class="svg-wrapper">
+                    {{ tmpl.render_sample }}
+                  </div>
+                </td>
+
+                <td>
+                  <a class="btn btn-success" href="{% url 'customize' tmpl.id %}">Customize</a>
+                </td>
+              </tr>
+            {% endfor %}
+          </table>
+
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
