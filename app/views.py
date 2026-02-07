@@ -1,10 +1,9 @@
-from django.http import HttpResponse
-from django.shortcuts import render
+from django.http import HttpResponse, HttpResponseBadRequest
+from django.shortcuts import render, redirect
 
 from app.models import TemplateFile
 
 
-# Create your views here.
 def choose_file(request):
     return render(request, "app/choose_file.html", {
         "templates": TemplateFile.objects.all()
@@ -27,3 +26,18 @@ def render_template(request, template_id):
     print(dict(request.GET))
 
     return HttpResponse(out)
+
+
+def admin(request):
+    return render(request, "app/admin.html")
+
+
+def admin_save_pat(request):
+    if request.method == "POST" and 'pat' in request.POST:
+        pat = request.POST['pat']
+
+        request.session['pat'] = pat
+
+        return redirect('admin')
+
+    return HttpResponseBadRequest()

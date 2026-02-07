@@ -26,6 +26,77 @@
               rerender()
           }
       )
+
+      // --- Configuration ---
+      const apiKey = "{{ request.session.pat }}";
+      const baseUrl = `http://{{ request.session.ruby_ip }}:2402/api/v1`;
+
+      /**
+       * Grabs the SVG from the DOM and sends it to Ruby
+       */
+      function sendDomSvgToLaser() {
+          // 1. Get the SVG element from your container
+          const svgElement = $('#svg-container').children('svg')[0];
+
+          if (!svgElement) {
+              console.error("❌ No SVG found inside #svg-container");
+              return;
+          }
+
+          // 2. Convert the DOM element to an XML string
+          const serializer = new XMLSerializer();
+          const svgString = serializer.serializeToString(svgElement);
+
+          // 3. Create a Blob (the "file" data) and a File object
+          // We name it 'web_export.svg' so Ruby identifies the type correctly
+          const svgBlob = new Blob([svgString], {type: 'image/svg+xml'});
+          const fileObject = new File([svgBlob], "web_export.svg", {type: 'image/svg+xml'});
+
+          console.log("🚀 SVG captured from DOM. Uploading...");
+
+          // 4. Proceed with the Upload
+          const formData = new FormData();
+          formData.append("file", fileObject);
+
+          $.ajax({
+              url: `${baseUrl}/imports`,
+              type: "POST",
+              headers: {
+                  "Authorization": `Bearer ${apiKey}`,
+                  "Accept": "application/json"
+              },
+              data: formData,
+              processData: false,
+              contentType: false,
+              success: function (response) {
+                  const jobId = response.id;
+                  console.log(`✅ Job Created! ID: ${jobId}`);
+
+                  // Step 5: Push to Production Queue
+                  setTimeout(() => pushToProduction(jobId), 1000);
+              },
+              error: function (xhr) {
+                  console.error("❌ Upload failed:", xhr.responseText);
+              }
+          });
+      }
+
+      function pushToProduction(jobId) {
+          $.ajax({
+              url: `${baseUrl}/jobs/${jobId}/produce`,
+              type: "PUT",
+              headers: {
+                  "Authorization": `Bearer ${apiKey}`,
+                  "Accept": "application/json"
+              },
+              success: function () {
+                  console.log("✨ Success! The job is now on the laser. Just press START.");
+              },
+              error: function (xhr) {
+                  console.error("❌ Failed to push to laser:", xhr.responseText);
+              }
+          });
+      }
   </script>
 {% endblock %}
 
@@ -58,6 +129,10 @@
               >
             </div>
           {% endfor %}
+
+          <div class="mt-4 mb-2 text-center">
+            <button class="btn btn-primary btn-block">Finished Customizing</button>
+          </div>
         </div>
       </div>
     </div>
