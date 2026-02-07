@@ -19,6 +19,11 @@ from django.core.management.utils import get_random_secret_key
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
+# Detect if running from PyInstaller
+def is_frozen():
+    return getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS')
+
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
@@ -196,10 +201,6 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
-
-# Detect if running from PyInstaller
-def is_frozen():
-    return getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS')
 
 if DOCKER:
     STATIC_ROOT = "/app/static"
