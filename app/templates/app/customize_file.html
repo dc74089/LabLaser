@@ -62,7 +62,7 @@
               url: `${baseUrl}/imports`,
               type: "POST",
               headers: {
-                  "Authorization": `Bearer ${apiKey}`,
+                  "Authorization": `PersonalAccessToken ${apiKey}`,
                   "Accept": "application/json"
               },
               data: formData,
@@ -86,7 +86,7 @@
               url: `${baseUrl}/jobs/${jobId}/produce`,
               type: "PUT",
               headers: {
-                  "Authorization": `Bearer ${apiKey}`,
+                  "Authorization": `PersonalAccessToken ${apiKey}`,
                   "Accept": "application/json"
               },
               success: function () {
