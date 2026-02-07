@@ -41,3 +41,14 @@ def admin_save_pat(request):
         return redirect('admin')
 
     return HttpResponseBadRequest()
+
+
+def admin_save_ip(request):
+    if request.method == "POST" and 'ip' in request.POST:
+        ip = request.POST['ip']
+
+        request.session['ip'] = ip
+
+        return redirect('admin')
+
+    return HttpResponseBadRequest()
