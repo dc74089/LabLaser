@@ -31,12 +31,16 @@ for root, dirs, files in os.walk(project_dir / 'app' / 'static'):
 
 # Collect settings and other config files
 config_files = [
+    (str(project_dir / 'LabLaser' / '__init__.py'), 'LabLaser'),
     (str(project_dir / 'LabLaser' / 'settings.py'), 'LabLaser'),
     (str(project_dir / 'LabLaser' / 'urls.py'), 'LabLaser'),
     (str(project_dir / 'LabLaser' / 'wsgi.py'), 'LabLaser'),
+    (str(project_dir / 'app' / '__init__.py'), 'app'),
+    (str(project_dir / 'app' / 'apps.py'), 'app'),
     (str(project_dir / 'app' / 'urls.py'), 'app'),
     (str(project_dir / 'app' / 'views.py'), 'app'),
     (str(project_dir / 'app' / 'models.py'), 'app'),
+    (str(project_dir / 'app' / 'admin.py'), 'app'),
 ]
 
 # Combine all data files
@@ -55,14 +59,24 @@ a = Analysis(
         'django.contrib.sessions',
         'django.contrib.messages',
         'django.contrib.staticfiles',
+        'django.template',
+        'django.template.loaders',
+        'django.template.loaders.filesystem',
+        'django.template.loaders.app_directories',
         'app',
+        'app.apps',
+        'app.apps.AppConfig',
         'app.models',
         'app.views',
         'app.urls',
+        'app.admin',
+        'LabLaser',
         'LabLaser.settings',
         'LabLaser.urls',
         'LabLaser.wsgi',
         'requests',
+        'json',
+        'uuid',
     ],
     hookspath=[],
     hooksconfig={},

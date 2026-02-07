@@ -67,4 +67,15 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except Exception as e:
+        print("\n" + "=" * 50)
+        print("ERROR OCCURRED!")
+        print("=" * 50)
+        print(f"\n{type(e).__name__}: {str(e)}\n")
+        import traceback
+        traceback.print_exc()
+        print("\nPress Enter to exit...")
+        input()
+        sys.exit(1)
