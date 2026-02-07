@@ -29,7 +29,7 @@
 
       // --- Configuration ---
       const apiKey = "{{ request.session.pat }}";
-      const baseUrl = `http://{{ request.session.ruby_ip }}:2402/api/v1`;
+      const baseUrl = `http://{{ request.session.ip }}:2402/api/v1`;
 
       /**
        * Grabs the SVG from the DOM and sends it to Ruby
