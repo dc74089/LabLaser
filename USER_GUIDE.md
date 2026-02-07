@@ -6,8 +6,12 @@
 
 1. **Double-click** `GKTW_Laser_Tool.exe`
 2. A black window (console) will appear - **DO NOT CLOSE THIS WINDOW**
-3. Your web browser will automatically open to the application
-4. If the browser doesn't open, manually go to: http://127.0.0.1:8000
+3. On first run, it will:
+   - Set up the database
+   - Create an admin user (username: `admin`, password: `Volunteer710`)
+   - Load any SVG templates from the `svgs` folder
+4. Your web browser will automatically open to the application
+5. If the browser doesn't open, manually go to: http://127.0.0.1:8000
 
 ### Creating Laser Files
 
@@ -73,25 +77,41 @@ When you're done:
 
 ### Managing Templates
 
-Template files are Django templates that support variable substitution:
-- Use `{{ data.0 }}` for the first line
-- Use `{{ data.1 }}` for the second line
-- And so on...
+#### Default Admin Login
+- **Username**: `admin`
+- **Password**: `Volunteer710`
+- **URL**: http://127.0.0.1:8000/admin/
 
-To add new templates:
-1. Access the Django admin interface: http://127.0.0.1:8000/admin/
-2. Login with superuser credentials
-3. Add new TemplateFile entries
+#### Automatic Template Loading
 
-### Creating a Superuser
-
-To access the Django admin:
-
-```bash
-python manage.py createsuperuser
+Place SVG files in the `svgs` folder next to the .exe:
+```
+GKTW_Laser_Tool.exe
+svgs/
+  ├── badge.svg
+  ├── keychain.svg
+  └── name_tag.svg
 ```
 
-Follow the prompts to create an admin account.
+Templates use Django template syntax:
+- `{{ data.0 }}` - First customization field
+- `{{ data.1 }}` - Second customization field
+- `{{ data.2 }}` - Third customization field
+- And so on...
+
+On startup, the application will:
+1. Scan the `svgs` folder
+2. Detect how many fields each template needs (by counting `{{ data.X }}` tags)
+3. Automatically create TemplateFile entries
+4. Skip templates that already exist
+
+#### Manual Template Management
+
+You can also add templates manually:
+1. Go to: http://127.0.0.1:8000/admin/
+2. Login with admin credentials
+3. Click "Template files"
+4. Add new entries manually
 
 ### Data Storage
 
