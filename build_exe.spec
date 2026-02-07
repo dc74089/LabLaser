@@ -11,9 +11,9 @@ from PyInstaller.utils.hooks import collect_all, collect_submodules
 # Get the project directory
 project_dir = Path(SPECPATH)
 
-# Collect EVERYTHING from the app directory
+# Collect EVERYTHING from the app directory and svgs directory
 all_data_files = []
-for item in ['app', 'LabLaser']:
+for item in ['app', 'LabLaser', 'svgs']:
     item_path = project_dir / item
     if item_path.exists():
         for root, dirs, files in os.walk(item_path):

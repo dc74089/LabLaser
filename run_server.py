@@ -65,8 +65,9 @@ def load_svg_templates():
 
     # Find svgs directory
     if is_frozen():
-        # When running from PyInstaller, look next to the executable
-        svgs_dir = Path(sys.executable).parent / 'svgs'
+        # When running from PyInstaller, look in the extracted bundle directory
+        # sys._MEIPASS is the temp folder where PyInstaller extracts files
+        svgs_dir = Path(sys._MEIPASS) / 'svgs'
     else:
         # When running from source
         svgs_dir = Path(__file__).parent / 'svgs'
