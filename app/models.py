@@ -39,6 +39,7 @@ class CustomizedFile(models.Model):
     guest_name = models.CharField(max_length=255)
     template = models.ForeignKey(TemplateFile, on_delete=models.CASCADE)
     slot_data = models.TextField()  # A json-formatted list of strings
+    created = models.DateTimeField(auto_now_add=True)
 
     def render(self):
         data = json.loads(self.slot_data)
