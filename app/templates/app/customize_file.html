@@ -27,73 +27,43 @@
           }
       )
 
-      // --- Configuration ---
-      const apiKey = "{{ request.session.pat }}";
-      const baseUrl = `http://{{ request.session.ip }}:5001/api/OpenAPI`;
-
       /**
-       * Grabs the SVG from the DOM and sends it to Ruby
+       * Save the customized file to the database
        */
-      function sendDomSvgToLaser() {
-          // 1. Get the SVG element from your container
-          const svgElement = $('#svg_container').children('svg')[0];
+      function saveCustomizedFile() {
+          // Get the customization data
+          let data = $('.customization').map(function () {
+              return $(this).val();
+          }).get();
 
-          if (!svgElement) {
-              console.error("❌ No SVG found inside #svg-container");
-              return;
-          }
+          const guestName = $('#guest_name').val() || 'Guest';
 
-          // 2. Convert the DOM element to an XML string
-          const serializer = new XMLSerializer();
-          const svgString = serializer.serializeToString(svgElement);
-
-          // 3. Create a Blob (the "file" data) and a File object
-          // We name it 'web_export.svg' so Ruby identifies the type correctly
-          const svgBlob = new Blob([svgString], {type: 'image/svg+xml'});
-          const fileObject = new File([svgBlob], "web_export.svg", {type: 'image/svg+xml'});
-
-          console.log("🚀 SVG captured from DOM. Uploading...");
-
-          // 4. Proceed with the Upload
+          // Prepare form data
           const formData = new FormData();
-          formData.append("file", fileObject);
+          formData.append('guest_name', guestName);
+          data.forEach(item => formData.append('data[]', item));
 
+          // Get CSRF token
+          const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+          // Save to database
           $.ajax({
-              url: `${baseUrl}/imports`,
+              url: "{% url 'save_customized_file' template.id %}",
               type: "POST",
               headers: {
-                  "Authorization": `PersonalAccessToken ${apiKey}`,
-                  "Accept": "application/json"
+                  "X-CSRFToken": csrftoken
               },
               data: formData,
               processData: false,
               contentType: false,
               success: function (response) {
-                  const jobId = response.id;
-                  console.log(`✅ Job Created! ID: ${jobId}`);
-
-                  // Step 5: Push to Production Queue
-                  setTimeout(() => pushToProduction(jobId), 1000);
+                  console.log("✅ File saved successfully!");
+                  // Redirect to the list page
+                  window.location.href = "{% url 'list_customized_files' %}";
               },
               error: function (xhr) {
-                  console.error("❌ Upload failed:", xhr.responseText);
-              }
-          });
-      }
-
-      function pushToProduction(jobId) {
-          $.ajax({
-              url: `${baseUrl}/jobs/${jobId}/produce`,
-              type: "PUT",
-              headers: {
-                  "Authorization": `PersonalAccessToken ${apiKey}`,
-                  "Accept": "application/json"
-              },
-              success: function () {
-                  console.log("✨ Success! The job is now on the laser. Just press START.");
-              },
-              error: function (xhr) {
-                  console.error("❌ Failed to push to laser:", xhr.responseText);
+                  console.error("❌ Save failed:", xhr.responseText);
+                  alert("Failed to save file. Please try again.");
               }
           });
       }
@@ -116,6 +86,19 @@
         <div class="card-body">
           <h2 class="text-center">Customize {{ template.name }}</h2>
 
+          {% csrf_token %}
+
+          <div class="mb-3">
+            <label for="guest_name">Guest Name (Optional)</label>
+            <input
+                    type="text"
+                    class="form-control"
+                    name="guest_name"
+                    id="guest_name"
+                    placeholder="Enter guest name"
+            >
+          </div>
+
           {% for i in template.slot_iterator %}
             <hr/>
             <div class="mb-3">
@@ -131,7 +114,7 @@
           {% endfor %}
 
           <div class="mt-4 mb-2 text-center">
-            <button class="btn btn-primary btn-block" onclick="sendDomSvgToLaser()">Finished Customizing</button>
+            <button class="btn btn-primary btn-block" onclick="saveCustomizedFile()">Finished Customizing</button>
           </div>
         </div>
       </div>

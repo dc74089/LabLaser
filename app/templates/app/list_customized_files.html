@@ -1,0 +1,106 @@
+{% extends 'app/base.html' %}
+
+{% block content %}
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body">
+          <h2 class="text-center mb-4">Customized Files</h2>
+
+          {% if messages %}
+            {% for message in messages %}
+              <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            {% endfor %}
+          {% endif %}
+
+          {% if customized_files %}
+            <div class="table-responsive">
+              <table class="table table-striped table-hover">
+                <thead>
+                <tr>
+                  <th>Guest Name</th>
+                  <th>Template</th>
+                  <th>Created</th>
+                  <th>Preview</th>
+                  <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for file in customized_files %}
+                  <tr>
+                    <td>{{ file.guest_name }}</td>
+                    <td>{{ file.template.name }}</td>
+                    <td>{{ file.created|date:"M d, Y g:i A" }}</td>
+                    <td>
+                      <button class="btn btn-sm btn-outline-secondary" onclick="showPreview({{ file.id }})">
+                        View SVG
+                      </button>
+                    </td>
+                    <td>
+                      <form method="post" action="{% url 'send_to_laser' file.id %}" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-success">
+                          Send to Laser
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <p class="text-center text-muted">No customized files yet.</p>
+          {% endif %}
+
+          <div class="mt-4 text-center">
+            <a href="{% url 'index' %}" class="btn btn-primary">Create New File</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Preview Modal -->
+  <div class="modal fade" id="previewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">SVG Preview</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body text-center" id="previewContent">
+          <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+      function showPreview(fileId) {
+          const modal = new bootstrap.Modal(document.getElementById('previewModal'));
+          const previewContent = document.getElementById('previewContent');
+
+          // Show loading spinner
+          previewContent.innerHTML = `
+            <div class="spinner-border" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          `;
+
+          modal.show();
+
+          // Fetch the SVG preview
+          $.get(`/customized/${fileId}/preview/`, function (data) {
+              previewContent.innerHTML = data;
+          }).fail(function () {
+              previewContent.innerHTML = '<p class="text-danger">Failed to load preview</p>';
+          });
+      }
+  </script>
+{% endblock %}

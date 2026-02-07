@@ -1,7 +1,11 @@
-from django.http import HttpResponse, HttpResponseBadRequest
-from django.shortcuts import render, redirect
+import json
+import requests
+from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
+from django.shortcuts import render, redirect, get_object_or_404
+from django.views.decorators.http import require_POST
+from django.contrib import messages
 
-from app.models import TemplateFile
+from app.models import TemplateFile, CustomizedFile
 
 
 def choose_file(request):
@@ -52,3 +56,104 @@ def admin_save_ip(request):
         return redirect('admin')
 
     return HttpResponseBadRequest()
+
+
+@require_POST
+def save_customized_file(request, template_id):
+    """Save a customized file when user clicks 'Finished Customizing'"""
+    template = get_object_or_404(TemplateFile, id=template_id)
+
+    # Get the customization data from POST
+    guest_name = request.POST.get('guest_name', 'Guest')
+    slot_data_list = request.POST.getlist('data[]')
+
+    # Create the CustomizedFile
+    customized_file = CustomizedFile.objects.create(
+        guest_name=guest_name,
+        template=template,
+        slot_data=json.dumps(slot_data_list)
+    )
+
+    return JsonResponse({
+        'success': True,
+        'id': str(customized_file.id),
+        'message': 'File saved successfully'
+    })
+
+
+def send_to_laser(request, customized_file_id):
+    """Send a customized file to the Trotec Ruby laser via API"""
+    customized_file = get_object_or_404(CustomizedFile, id=customized_file_id)
+
+    # Get API credentials from session
+    api_key = request.session.get('pat')
+    ip_address = request.session.get('ip')
+
+    if not api_key or not ip_address:
+        messages.error(request, 'API credentials not configured. Please configure in admin.')
+        return redirect('list_customized_files')
+
+    base_url = f"http://{ip_address}:5001/api/OpenApi"
+
+    try:
+        # Render the SVG
+        svg_content = customized_file.render()
+
+        # Upload the file using the documented /Upload endpoint
+        # According to swagger spec, the field name should be 'uploadedFile'
+        files = {
+            'uploadedFile': ('web_export.svg', svg_content.encode('utf-8'), 'image/svg+xml')
+        }
+        headers = {
+            'Authorization': f'PersonalAccessToken {api_key}',
+            'Accept': 'application/json',
+            'x-api-version': '1.0-OpenApi'
+        }
+
+        upload_response = requests.post(
+            f"{base_url}/Upload",
+            headers=headers,
+            files=files,
+            timeout=30
+        )
+        upload_response.raise_for_status()
+
+        # Note: The swagger spec indicates Upload returns 'Nothing' (empty response)
+        # The original JavaScript code expected an 'id' and then called /jobs/{id}/produce
+        # but that endpoint is not documented in the swagger spec.
+        #
+        # If the upload is successful, the file should be in the queue.
+        # You may need to use /GetQueueElements to find it, or the workflow
+        # might be different than originally implemented.
+
+        messages.success(request, f'Successfully uploaded to laser! The file should now be in the queue. Press START on the machine.')
+
+    except requests.RequestException as e:
+        error_detail = str(e)
+        if hasattr(e, 'response') and e.response is not None:
+            try:
+                error_json = e.response.json()
+                if 'code' in error_json:
+                    error_detail = f"{error_json['code']}: {error_json.get('additionalInfo', '')}"
+            except:
+                error_detail = e.response.text if e.response.text else str(e)
+
+        messages.error(request, f'Failed to send to laser: {error_detail}')
+
+    return redirect('list_customized_files')
+
+
+def list_customized_files(request):
+    """Display the last 50 customized files, newest first"""
+    customized_files = CustomizedFile.objects.select_related('template').order_by('-created')[:50]
+
+    return render(request, 'app/list_customized_files.html', {
+        'customized_files': customized_files
+    })
+
+
+def preview_customized_file(request, customized_file_id):
+    """Return the rendered SVG for preview"""
+    customized_file = get_object_or_404(CustomizedFile, id=customized_file_id)
+    svg_content = customized_file.render()
+    return HttpResponse(svg_content)
