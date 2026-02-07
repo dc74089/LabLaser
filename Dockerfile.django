@@ -1,0 +1,4 @@
+FROM dc74089/django-base
+
+WORKDIR /app/code
+COPY . /app/code

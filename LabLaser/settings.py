@@ -10,7 +10,10 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 import os
+import sys
 from pathlib import Path
+
+from django.core.management.utils import get_random_secret_key
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -19,14 +22,36 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-wts#)l$)p04of7$(e4gif(+ie^s2zw)5*x0kf200-*2f^lwa6#'
-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = not os.getenv("PROD", False)
 DOCKER = os.getenv("DOCKER", False)
 
-ALLOWED_HOSTS = []
+if DOCKER and not DEBUG:
+    key_loc = "/app/secret/secret.key"
+    if not os.path.exists(key_loc):
+        with open(key_loc, "w") as f:
+            f.write(get_random_secret_key())
+    with open(key_loc, "r") as f:
+        try:
+            SECRET_KEY = f.read()
+        except IOError:
+            SECRET_KEY = ""
+elif DEBUG:
+    SECRET_KEY = 'django-insecure-5x+1sy-167242m776=rdp8zy03f$y182*hj7bk9e172k7b*q2v'
+else:
+    SECRET_KEY = ''
+
+
+ALLOWED_HOSTS = [
+    'lablaser.canora.us'
+]
+
+if DEBUG:
+    ALLOWED_HOSTS.extend([
+        '127.0.0.1',
+        'localhost',
+        "*",
+    ])
 
 
 # Application definition
@@ -75,12 +100,29 @@ WSGI_APPLICATION = 'LabLaser.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+if DOCKER:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': 'django',
+            'USER': 'django',
+            'PASSWORD': 'django',
+            'HOST': 'mysql',
+            'PORT': '3306',
+            'charset': 'utf8mb4',
+            'use_unicode': True,
+            'OPTIONS': {
+                'charset': 'utf8mb4'
+            }
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        }
+    }
 
 
 # Password validation
@@ -101,13 +143,38 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'stream': sys.stdout,
+            'formatter': 'verbose'
+        },
+    },
+    'loggers': {
+        '': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+    },
+}
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/New_York'
 
 USE_I18N = True
 
