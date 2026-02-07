@@ -33,7 +33,37 @@ def render_template(request, template_id):
 
 
 def admin(request):
-    return render(request, "app/admin.html")
+    # Fetch available import profiles if credentials are configured
+    import_profiles = []
+    error_message = None
+
+    api_key = request.session.get('pat')
+    ip_address = request.session.get('ip')
+
+    if api_key and ip_address:
+        try:
+            base_url = f"http://{ip_address}:5001/api/OpenApi"
+            headers = {
+                'Authorization': f'PersonalAccessToken {api_key}',
+                'Accept': 'application/json',
+                'x-api-version': '1.0-OpenApi'
+            }
+
+            response = requests.get(
+                f"{base_url}/GetImportProfiles",
+                headers=headers,
+                timeout=10
+            )
+            response.raise_for_status()
+            import_profiles = response.json()
+        except requests.RequestException as e:
+            error_message = f"Could not fetch import profiles: {str(e)}"
+
+    return render(request, "app/admin.html", {
+        'import_profiles': import_profiles,
+        'error_message': error_message,
+        'selected_profile_id': request.session.get('import_profile_id')
+    })
 
 
 def admin_save_pat(request):
@@ -53,6 +83,18 @@ def admin_save_ip(request):
 
         request.session['ip'] = ip
 
+        return redirect('admin')
+
+    return HttpResponseBadRequest()
+
+
+def admin_save_import_profile(request):
+    if request.method == "POST" and 'import_profile_id' in request.POST:
+        profile_id = request.POST['import_profile_id']
+
+        request.session['import_profile_id'] = profile_id
+
+        messages.success(request, 'Default import profile saved successfully.')
         return redirect('admin')
 
     return HttpResponseBadRequest()
@@ -88,6 +130,7 @@ def send_to_laser(request, customized_file_id):
     # Get API credentials from session
     api_key = request.session.get('pat')
     ip_address = request.session.get('ip')
+    import_profile_id = request.session.get('import_profile_id')
 
     if not api_key or not ip_address:
         messages.error(request, 'API credentials not configured. Please configure in admin.')
@@ -110,23 +153,25 @@ def send_to_laser(request, customized_file_id):
             'x-api-version': '1.0-OpenApi'
         }
 
+        # Build URL with optional import profile
+        url = f"{base_url}/Upload"
+        params = {}
+        if import_profile_id:
+            params['importProfileId'] = import_profile_id
+
+        # Use guest name as tracking number for easier identification
+        params['trackingNumber'] = customized_file.guest_name
+
         upload_response = requests.post(
-            f"{base_url}/Upload",
+            url,
             headers=headers,
             files=files,
+            params=params,
             timeout=30
         )
         upload_response.raise_for_status()
 
-        # Note: The swagger spec indicates Upload returns 'Nothing' (empty response)
-        # The original JavaScript code expected an 'id' and then called /jobs/{id}/produce
-        # but that endpoint is not documented in the swagger spec.
-        #
-        # If the upload is successful, the file should be in the queue.
-        # You may need to use /GetQueueElements to find it, or the workflow
-        # might be different than originally implemented.
-
-        messages.success(request, f'Successfully uploaded to laser! The file should now be in the queue. Press START on the machine.')
+        messages.success(request, f'Successfully uploaded "{customized_file.guest_name}" to laser! The file should now be in the queue. Press START on the machine.')
 
     except requests.RequestException as e:
         error_detail = str(e)

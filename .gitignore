@@ -6,3 +6,9 @@ env/
 media/
 yearbook/*.jpg
 **/.DS_Store
+
+# PyInstaller build artifacts
+build/
+dist/
+*.spec.bak
+__pycache__/
