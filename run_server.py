@@ -26,9 +26,14 @@ def setup_django():
 
 def run_migrations():
     """Run database migrations on startup"""
-    from django.core.management import execute_from_command_line
+    from django.core.management import call_command
     print("Setting up database...")
-    execute_from_command_line(['manage.py', 'migrate', '--noinput'])
+    try:
+        call_command('migrate', '--noinput', verbosity=1)
+        print("✓ Database migrations completed successfully")
+    except Exception as e:
+        print(f"✗ Migration failed: {e}")
+        raise
 
 
 def is_frozen():
