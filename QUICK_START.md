@@ -1,6 +1,16 @@
 # Quick Start Guide
 
-## Building the EXE (One-time setup)
+## ⚠️ Building from Mac?
+
+**PyInstaller can only build for the OS it's running on.**
+
+You have two options:
+1. **Use GitHub Actions** (push to GitHub, download built .exe from Actions tab)
+2. **Build on Windows** (VM, physical PC, or the Ruby computer itself)
+
+See `BUILD_INSTRUCTIONS.md` for details.
+
+## Building the EXE on Windows
 
 1. **Install PyInstaller**:
    ```bash
@@ -15,6 +25,18 @@
 3. **Find your EXE**:
    - Look in the `dist` folder
    - File will be named: `GKTW_Laser_Tool.exe`
+
+## Building with GitHub Actions (from any OS)
+
+1. **Push to GitHub**:
+   ```bash
+   git push
+   ```
+
+2. **Download EXE**:
+   - Go to GitHub → Actions tab
+   - Find latest build
+   - Download from Artifacts section
 
 ## Running Without Building
 

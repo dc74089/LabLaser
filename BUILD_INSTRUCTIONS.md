@@ -2,22 +2,38 @@
 
 This guide will help you create a standalone Windows executable (.exe) for the GKTW Laser Tool.
 
-## Prerequisites
+## Important: Cross-Platform Building
 
-1. **Python 3.8 or higher** installed
-2. **All dependencies** installed (see requirements.txt)
-3. **PyInstaller** - Install with: `pip install pyinstaller`
+**PyInstaller can only build executables for the platform it's running on.** This means:
+- Building on **Windows** → Creates `.exe` for Windows ✅
+- Building on **Mac** → Creates Mac app, NOT `.exe` ❌
+- Building on **Linux** → Creates Linux binary, NOT `.exe` ❌
 
-## Build Steps
+### Your Options:
 
-### 1. Install Build Dependencies
+1. **Build on Windows machine/VM** (Section 1 below) - Most reliable
+2. **Use GitHub Actions** (Section 2 below) - Automated cloud build
+3. **Build on the Ruby computer** - If it has Python installed
+
+## Section 1: Building on Windows
+
+### Prerequisites
+
+1. **Windows PC or VM**
+2. **Python 3.8 or higher** installed
+3. **All dependencies** installed (see requirements.txt)
+4. **PyInstaller** - Install with: `pip install pyinstaller`
+
+### Build Steps
+
+#### 1. Install Build Dependencies
 
 ```bash
 pip install pyinstaller
 pip install -r requirements.txt
 ```
 
-### 2. Test the Application First
+#### 2. Test the Application First
 
 Before building, make sure the application runs correctly:
 
@@ -32,7 +48,7 @@ This should:
 
 Press CTRL+C to stop when done testing.
 
-### 3. Build the Executable
+#### 3. Build the Executable
 
 Run PyInstaller with the provided spec file:
 
@@ -47,7 +63,7 @@ This will:
 
 The build process may take a few minutes.
 
-### 4. Test the Executable
+#### 4. Test the Executable
 
 Navigate to the dist folder and run:
 
@@ -57,6 +73,50 @@ GKTW_Laser_Tool.exe
 ```
 
 The application should start and open in your browser.
+
+---
+
+## Section 2: Building with GitHub Actions (Cloud)
+
+If you don't have access to a Windows machine, use GitHub Actions to build automatically in the cloud.
+
+### Setup (One-time)
+
+1. **Push your code to GitHub**:
+   ```bash
+   git add .
+   git commit -m "Add build workflow"
+   git push
+   ```
+
+2. **The workflow will run automatically** on every push to main branch
+
+### Download the Built EXE
+
+1. Go to your GitHub repository
+2. Click **"Actions"** tab
+3. Click on the latest workflow run
+4. Scroll down to **"Artifacts"**
+5. Download **"GKTW-Laser-Tool-Windows"**
+6. Extract the zip file to get `GKTW_Laser_Tool.exe`
+
+### Manual Build Trigger
+
+You can also trigger a build manually:
+1. Go to **Actions** tab
+2. Click **"Build Windows EXE"** workflow
+3. Click **"Run workflow"** button
+4. Wait for completion (~5-10 minutes)
+5. Download from Artifacts section
+
+### Benefits of GitHub Actions:
+- ✅ No Windows machine needed
+- ✅ Consistent build environment
+- ✅ Automatic builds on every push
+- ✅ Free for public repositories
+- ✅ Build history and artifacts retained
+
+---
 
 ## Distribution
 
