@@ -116,7 +116,17 @@ if DOCKER:
             }
         }
     }
+elif is_frozen():
+    # When running from PyInstaller, store database next to the executable
+    executable_dir = os.path.dirname(sys.executable)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join(executable_dir, 'db.sqlite3'),
+        }
+    }
 else:
+    # Development: use project directory
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -187,8 +197,19 @@ USE_TZ = True
 STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
 
+# Detect if running from PyInstaller
+def is_frozen():
+    return getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS')
+
 if DOCKER:
     STATIC_ROOT = "/app/static"
     MEDIA_ROOT = "/app/media"
+elif is_frozen():
+    # When running from PyInstaller, store media next to the executable
+    executable_dir = os.path.dirname(sys.executable)
+    MEDIA_ROOT = os.path.join(executable_dir, "media")
+    # Ensure the directory exists
+    os.makedirs(MEDIA_ROOT, exist_ok=True)
 else:
-    MEDIA_ROOT = "media"
+    # Development: use relative path
+    MEDIA_ROOT = os.path.join(BASE_DIR, "media")
