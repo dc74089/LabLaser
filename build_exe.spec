@@ -6,77 +6,39 @@ Usage: pyinstaller build_exe.spec
 
 import os
 from pathlib import Path
+from PyInstaller.utils.hooks import collect_all, collect_submodules
 
 # Get the project directory
 project_dir = Path(SPECPATH)
 
-# Collect all Django template files
-template_files = []
-for root, dirs, files in os.walk(project_dir / 'app' / 'templates'):
-    for file in files:
-        if file.endswith('.html'):
-            file_path = os.path.join(root, file)
-            rel_path = os.path.relpath(file_path, project_dir)
-            dest_dir = os.path.dirname(rel_path)
-            template_files.append((file_path, dest_dir))
+# Collect EVERYTHING from the app directory
+all_data_files = []
+for item in ['app', 'LabLaser']:
+    item_path = project_dir / item
+    if item_path.exists():
+        for root, dirs, files in os.walk(item_path):
+            # Skip __pycache__ and .pyc files
+            dirs[:] = [d for d in dirs if d != '__pycache__']
+            for file in files:
+                if not file.endswith('.pyc'):
+                    file_path = os.path.join(root, file)
+                    rel_path = os.path.relpath(file_path, project_dir)
+                    dest_dir = os.path.dirname(rel_path)
+                    all_data_files.append((file_path, dest_dir))
 
-# Collect all static files
-static_files = []
-for root, dirs, files in os.walk(project_dir / 'app' / 'static'):
-    for file in files:
-        file_path = os.path.join(root, file)
-        rel_path = os.path.relpath(file_path, project_dir)
-        dest_dir = os.path.dirname(rel_path)
-        static_files.append((file_path, dest_dir))
-
-# Collect settings and other config files
-config_files = [
-    (str(project_dir / 'LabLaser' / '__init__.py'), 'LabLaser'),
-    (str(project_dir / 'LabLaser' / 'settings.py'), 'LabLaser'),
-    (str(project_dir / 'LabLaser' / 'urls.py'), 'LabLaser'),
-    (str(project_dir / 'LabLaser' / 'wsgi.py'), 'LabLaser'),
-    (str(project_dir / 'app' / '__init__.py'), 'app'),
-    (str(project_dir / 'app' / 'apps.py'), 'app'),
-    (str(project_dir / 'app' / 'urls.py'), 'app'),
-    (str(project_dir / 'app' / 'views.py'), 'app'),
-    (str(project_dir / 'app' / 'models.py'), 'app'),
-    (str(project_dir / 'app' / 'admin.py'), 'app'),
-]
-
-# Combine all data files
-all_data_files = template_files + static_files + config_files
+# Also collect all of Django
+datas_django, binaries_django, hiddenimports_django = collect_all('django')
+all_data_files.extend(datas_django)
 
 a = Analysis(
     ['run_server.py'],
     pathex=[str(project_dir)],
-    binaries=[],
+    binaries=binaries_django,
     datas=all_data_files,
-    hiddenimports=[
-        'django',
-        'django.contrib.admin',
-        'django.contrib.auth',
-        'django.contrib.contenttypes',
-        'django.contrib.sessions',
-        'django.contrib.messages',
-        'django.contrib.staticfiles',
-        'django.template',
-        'django.template.loaders',
-        'django.template.loaders.filesystem',
-        'django.template.loaders.app_directories',
-        'app',
-        'app.apps',
-        'app.apps.AppConfig',
-        'app.models',
-        'app.views',
-        'app.urls',
-        'app.admin',
-        'LabLaser',
-        'LabLaser.settings',
-        'LabLaser.urls',
-        'LabLaser.wsgi',
+    hiddenimports=hiddenimports_django + collect_submodules('app') + collect_submodules('LabLaser') + [
         'requests',
-        'json',
-        'uuid',
+        'requests.adapters',
+        'requests.auth',
     ],
     hookspath=[],
     hooksconfig={},
