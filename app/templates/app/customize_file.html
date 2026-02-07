@@ -17,7 +17,7 @@
           console.log(data);
 
           $.get("{% url 'render' template.id %}", {data: data}, function (data) {
-              $('#svg_contianer').html(data);
+              $('#svg_container').html(data);
           })
       }
 
@@ -105,7 +105,7 @@
     <div class="col-12 col-md-6">
       <div class="card">
         <div class="card-body">
-          <div id="svg_contianer">
+          <div id="svg_container">
           </div>
         </div>
       </div>
