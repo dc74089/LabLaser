@@ -10,10 +10,26 @@ import threading
 import time
 from pathlib import Path
 
+
+def is_frozen():
+    """Check if running from PyInstaller executable"""
+    return getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS')
+
+
 def setup_django():
     """Setup Django environment"""
-    # Add the project directory to the Python path
-    project_dir = Path(__file__).parent
+    # Determine the correct project directory
+    if is_frozen():
+        # When frozen, use the temp extraction directory for Python modules
+        project_dir = Path(sys._MEIPASS)
+        # But set the working directory to where the .exe is located
+        # so relative paths (like media, db) work correctly
+        exe_dir = Path(sys.executable).parent
+        os.chdir(exe_dir)
+        print(f"Working directory: {exe_dir}")
+    else:
+        project_dir = Path(__file__).parent
+
     sys.path.insert(0, str(project_dir))
 
     # Set Django settings module
@@ -27,18 +43,19 @@ def setup_django():
 def run_migrations():
     """Run database migrations on startup"""
     from django.core.management import call_command
+    from django.conf import settings
+
     print("Setting up database...")
+    print(f"Database location: {settings.DATABASES['default']['NAME']}")
+
     try:
-        call_command('migrate', '--noinput', verbosity=1)
+        call_command('migrate', '--noinput', verbosity=2)
         print("✓ Database migrations completed successfully")
     except Exception as e:
         print(f"✗ Migration failed: {e}")
+        import traceback
+        traceback.print_exc()
         raise
-
-
-def is_frozen():
-    """Check if running from PyInstaller executable"""
-    return getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS')
 
 
 def create_superuser():
